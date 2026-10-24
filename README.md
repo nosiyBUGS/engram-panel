@@ -151,3 +151,7 @@ Engram 使用 FTS5 trigram，太短的搜索词可能匹配不到；试试更长
 
 **改了记忆但 OpenCode / DSH 没马上看到**  
 它们通过 MCP 读取 Engram；下一次调用 `mem_search` / `mem_context` 时会读到新内容。必要时重启对应的 agent 会话。
+
+## 许可证
+
+Apache License 2.0。见 [LICENSE](LICENSE) 和 [NOTICE](NOTICE)。
