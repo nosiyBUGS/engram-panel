@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Engram 面板</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">◈</div>
+        <div class="brand-text">
+          <h1>Engram 面板</h1>
+          <p>本地记忆管理 · 编辑走 Engram API · 恢复直改 SQLite</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div id="connStatus" class="conn conn-wait">
+          <span class="dot"></span>
+          <span id="connText">连接中…</span>
+        </div>
+        <button id="backupBtn" class="btn" type="button" title="立即备份 Engram 数据库到 backups/">备份</button>
+        <button id="newBtn" class="btn btn-primary" type="button">＋ 新建记忆</button>
+        <button id="quitBtn" class="btn btn-ghost" type="button" title="关闭面板服务">退出</button>
+      </div>
+    </header>
+
+    <div class="statbar">
+      <div class="stat">
+        <span class="stat-label">记忆</span>
+        <strong id="statObs">—</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">会话</span>
+        <strong id="statSessions">—</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">项目</span>
+        <strong id="statProjects">—</strong>
+      </div>
+      <div class="stat">
+        <span class="stat-label">当前结果</span>
+        <strong id="statResults">—</strong>
+      </div>
+    </div>
+
+    <main class="workspace">
+      <section class="list-pane" aria-label="记忆列表">
+        <div class="view-tabs" role="tablist" aria-label="视图">
+          <button id="tabMemories" class="view-tab active" type="button" role="tab" aria-selected="true">记忆</button>
+          <button id="tabTrash" class="view-tab" type="button" role="tab" aria-selected="false">回收站 <span id="trashCount" class="tab-count">0</span></button>
+        </div>
+
+        <div class="search-row">
+          <div class="search-box">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <input id="searchInput" type="search" placeholder="搜索标题或内容…" autocomplete="off" spellcheck="false" aria-label="搜索记忆">
+            <kbd>Ctrl K</kbd>
+          </div>
+          <button id="searchBtn" class="btn" type="button">搜索</button>
+        </div>
+
+        <div class="filter-row">
+          <label class="field compact">
+            <span>项目</span>
+            <select id="projectFilter"></select>
+          </label>
+          <label class="field compact">
+            <span>类型</span>
+            <select id="typeFilter">
+              <option value="">全部类型</option>
+            </select>
+          </label>
+          <label class="field compact">
+            <span>范围</span>
+            <select id="scopeFilter">
+              <option value="">全部范围</option>
+              <option value="project">项目</option>
+              <option value="global">全局</option>
+              <option value="personal">个人</option>
+            </select>
+          </label>
+          <label class="field compact">
+            <span>数量</span>
+            <select id="limitFilter">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="list-head">
+          <div>
+            <span id="resultCount">0 条</span>
+            <span id="activeFilter" class="muted"></span>
+          </div>
+          <button id="refreshBtn" class="btn btn-ghost" type="button" title="刷新列表">↻ 刷新</button>
+        </div>
+
+        <div id="list" class="list" role="list"></div>
+      </section>
+
+      <section class="detail-pane" id="detailPane" aria-label="记忆详情">
+        <div id="emptyState" class="empty">
+          <div class="empty-icon">◈</div>
+          <h2>选择一条记忆</h2>
+          <p>从左侧列表打开，或新建一条。<br>编辑后点“保存修改”才会写回 Engram。</p>
+          <div class="empty-tip">
+            <span>提示</span>
+            <p>这里改的是 Engram 的记忆，不是 SQLite 表。删除默认是软删除；永久删除前会自动备份整库。</p>
+          </div>
+        </div>
+
+        <div id="detailLoading" class="loading hidden">加载中…</div>
+
+        <form id="editor" class="editor hidden" autocomplete="off">
+          <div id="trashBanner" class="trash-banner hidden">
+            <div class="trash-banner-head">
+              <strong>回收站</strong>
+              <span id="trashDeletedAt"></span>
+            </div>
+            <p>恢复会直接改本地 SQLite；如果这个项目启用了云同步，不保证自动上传。</p>
+          </div>
+
+          <div class="editor-head">
+            <div class="editor-title-wrap">
+              <div class="eyebrow">
+                <span id="editId" class="mono"></span>
+                <span id="editTypeBadge" class="badge"></span>
+                <span id="editScopeBadge" class="badge badge-scope"></span>
+              </div>
+              <input id="editTitle" class="title-input" type="text" required maxlength="500" aria-label="标题">
+            </div>
+            <button type="button" id="closeEditor" class="btn btn-ghost icon-btn" title="关闭详情">✕</button>
+          </div>
+
+          <div class="meta-grid">
+            <div><span>项目</span><strong id="editProject" class="mono"></strong></div>
+            <div><span>会话</span><strong id="editSession" class="mono ellipsis"></strong></div>
+            <div><span>更新时间</span><strong id="editUpdated"></strong></div>
+            <div><span>修订</span><strong id="editRevision"></strong></div>
+            <div><span>Sync ID</span><strong id="editSync" class="mono ellipsis"></strong></div>
+            <div><span>创建时间</span><strong id="editCreated"></strong></div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>类型</span>
+              <select id="editType"></select>
+            </label>
+            <label class="field">
+              <span>范围</span>
+              <select id="editScope">
+                <option value="project">项目</option>
+                <option value="global">全局</option>
+                <option value="personal">个人</option>
+              </select>
+            </label>
+            <label class="field full">
+              <span>Topic key <em>可选，用于 upsert</em></span>
+              <input id="editTopicKey" maxlength="200" placeholder="例如 architecture/auth">
+            </label>
+            <label class="field full">
+              <span>内容</span>
+              <textarea id="editContent" rows="12" required spellcheck="false"></textarea>
+            </label>
+          </div>
+
+          <div id="editError" class="error hidden"></div>
+
+          <div class="editor-actions">
+            <button type="button" id="restoreBtn" class="btn btn-primary hidden">恢复</button>
+            <button type="submit" class="btn btn-primary" id="saveBtn">保存修改</button>
+            <button type="button" id="deleteBtn" class="btn btn-danger-ghost">删除</button>
+            <button type="button" id="hardDeleteBtn" class="btn btn-danger-ghost">永久删除</button>
+            <span class="spacer"></span>
+            <button type="button" id="copyIdBtn" class="btn btn-ghost">复制 ID</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">NEW MEMORY</div>
+          <h2 id="modalTitle">新建记忆</h2>
+        </div>
+        <button id="modalClose" class="btn btn-ghost icon-btn" type="button" title="关闭">✕</button>
+      </div>
+      <form id="newForm" class="form-grid" autocomplete="off">
+        <label class="field">
+          <span>项目 *</span>
+          <select id="newProject" required></select>
+        </label>
+        <label class="field">
+          <span>类型</span>
+          <select id="newType"></select>
+        </label>
+        <label class="field">
+          <span>范围</span>
+          <select id="newScope">
+            <option value="project">项目</option>
+            <option value="global">全局</option>
+            <option value="personal">个人</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Topic key <em>可选</em></span>
+          <input id="newTopicKey" maxlength="200" placeholder="例如 architecture/auth">
+        </label>
+        <label class="field full">
+          <span>标题 *</span>
+          <input id="newTitle" required maxlength="500" placeholder="一句话说明这条记忆">
+        </label>
+        <label class="field full">
+          <span>内容 *</span>
+          <textarea id="newContent" rows="12" required spellcheck="false" placeholder="**What**: ...&#10;**Why**: ...&#10;**Where**: ..."></textarea>
+        </label>
+        <div id="newError" class="error hidden full"></div>
+        <div class="modal-actions full">
+          <button type="button" id="newCancel" class="btn">取消</button>
+          <button type="submit" class="btn btn-primary" id="newSaveBtn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

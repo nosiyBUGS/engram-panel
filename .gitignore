@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+
+# Runtime data
+backups/
+logs/
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# Local configuration / secrets
+.env
+.env.*
+*.local
+
+# Editors and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test output
+test-results/
+playwright-report/
+node_modules/
