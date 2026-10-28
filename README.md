@@ -10,6 +10,25 @@
 - 支持新建记忆
 - 删除和恢复前自动用 SQLite 在线备份 API 生成整库快照；备份在 `backups/`，默认保留最近 20 份
 
+## 界面预览
+
+![记忆列表与详情](docs/screenshots/01-overview.png)
+
+*记忆列表、项目 / 类型 / 范围筛选，以及右侧详情编辑*
+
+![全文搜索](docs/screenshots/02-search.png)
+
+*基于 Engram FTS5 的全文搜索*
+
+| 编辑记忆 | 新建记忆 |
+|:---:|:---:|
+| ![编辑记忆](docs/screenshots/03-detail.png) | ![新建记忆](docs/screenshots/04-new.png) |
+| 修改类型、范围、topic_key 和内容 | 自动填入 What / Why / Where 模板 |
+
+![回收站](docs/screenshots/05-trash.png)
+
+*回收站：恢复或永久删除*
+
 ## 启动
 
 双击 `start-panel-silent.vbs`（Windows 无窗口启动），或者：
